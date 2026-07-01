@@ -35,9 +35,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/godwinokpe/react-native-stage-sheet.git"
+    "url": "git+https://github.com/onoja123/react-native-stage-sheet.git"
   },
-  "author": "Okpe Onoja Godwin <gkenny896@gmail.com>",
+  "homepage": "https://github.com/onoja123/react-native-stage-sheet#readme",
+  "bugs": {
+    "url": "https://github.com/onoja123/react-native-stage-sheet/issues"
+  },
+  "author": "Okpe Onoja Godwin <okpeonoja18@gmail.com>",
   "license": "MIT",
   "peerDependencies": {
     "react": ">=18.0.0",
