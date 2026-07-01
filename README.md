@@ -95,6 +95,33 @@ function AddDiscountButton() {
 
 That's it — the parent screen recedes into a card behind the sheet.
 
+## Motion
+
+The open/settle animation is fully configurable, and it's just Reanimated's
+[`WithSpringConfig`](https://docs.swmansion.com/react-native-reanimated/docs/animations/withSpring/) —
+so you can go **time-based** (`{ duration, dampingRatio }`) to make it faster or
+slower, or **physics-based** (`{ damping, stiffness, mass }`) for a springier feel.
+
+Set a default for **every** sheet on the provider:
+
+```tsx
+<SheetStageProvider springConfig={{ duration: 900, dampingRatio: 0.86 }}>
+  {/* app */}
+</SheetStageProvider>
+```
+
+Or override it **per sheet** — this wins over the provider default:
+
+```tsx
+present({
+  springConfig: { duration: 500, dampingRatio: 1 }, // snappier, no bounce
+  velocityFactor: 0.2,                               // how much a fling biases the target snap
+  render: ...,
+});
+```
+
+If neither is set, a sensible default spring is used.
+
 ## API
 
 ### `<SheetStageProvider>`
@@ -111,6 +138,8 @@ Wraps the app and renders the receding stage + the active sheet.
 | `sheetColor` | `string` | `"#FFFFFF"` | Sheet card background. |
 | `handleColor` | `string` | `"#D1D5DB"` | Drag-handle pill colour. |
 | `dimColor` | `string` | `"#000000"` | Dim overlay colour. |
+| `springConfig` | `WithSpringConfig` | sensible spring | Default open/settle animation for every sheet. |
+| `velocityFactor` | `number` | `0.15` | Default fling-to-snap bias for every sheet. |
 
 ### `useStageSheet()`
 

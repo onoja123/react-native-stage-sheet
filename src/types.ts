@@ -54,6 +54,8 @@ export interface StageConfig {
 
 export interface SheetStageProviderProps extends StageConfig, SheetColors {
   children: ReactNode;
+  springConfig?: WithSpringConfig;
+  velocityFactor?: number;
 }
 
 export interface DraggableSheetProps extends SheetColors {

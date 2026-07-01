@@ -29,6 +29,8 @@ export function SheetStageProvider({
   sheetColor = COLORS.sheet,
   handleColor = COLORS.handle,
   dimColor = COLORS.dim,
+  springConfig,
+  velocityFactor,
 }: SheetStageProviderProps) {
   const insets = useSafeAreaInsets();
   const { height: screenHeight } = useWindowDimensions();
@@ -113,8 +115,8 @@ export function SheetStageProvider({
             onClose={handleClosed}
             snapPoints={descriptor.snapPoints}
             initialSnapIndex={descriptor.initialSnapIndex}
-            springConfig={descriptor.springConfig}
-            velocityFactor={descriptor.velocityFactor}
+            springConfig={descriptor.springConfig ?? springConfig}
+            velocityFactor={descriptor.velocityFactor ?? velocityFactor}
             sheetColor={sheetColor}
             handleColor={handleColor}
             dimColor={dimColor}
