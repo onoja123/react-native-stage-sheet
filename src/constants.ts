@@ -1,0 +1,32 @@
+import type { WithSpringConfig } from "react-native-reanimated";
+
+export const DEFAULT_SPRING: WithSpringConfig = {
+  damping: 22,
+  stiffness: 240,
+  mass: 0.9,
+  overshootClamping: false,
+};
+
+export const DEFAULT_TOP_GAP = 12;
+export const DEFAULT_VELOCITY_FACTOR = 0.15;
+
+export const STAGE_SCALE = 0.91;
+export const STAGE_RADIUS = 14;
+export const STAGE_DIM = 0.35;
+
+export const SHEET_RADIUS = 20;
+export const HANDLE_WIDTH = 40;
+export const HANDLE_HEIGHT = 4;
+
+export const SHEET_PADDING = 20;
+export const SHEET_CONTENT_GAP = 20;
+export const SHEET_TITLE_SIZE = 18;
+
+export const COLORS = {
+  sheet: "#FFFFFF",
+  handle: "#D1D5DB",
+  dim: "#000000",
+  backdrop: "#000000",
+  stage: "#FFFFFF",
+  background: "#F3F4F6",
+} as const;
