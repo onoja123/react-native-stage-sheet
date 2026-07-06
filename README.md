@@ -95,6 +95,36 @@ function AddDiscountButton() {
 
 That's it — the parent screen recedes into a card behind the sheet.
 
+## Stacked sheets
+
+Calling `present` while a sheet is already open pushes a **new card on top** —
+the covered sheet recedes behind it (scales down and peeks above the new
+card's top edge), just like stacked `pageSheet` modals on iOS. `close()`
+dismisses the top card and the one below returns to the front. Up to 4 sheets
+can be stacked.
+
+```tsx
+function PaymentSheetBody() {
+  const { present } = useStageSheet();
+  // presenting from inside an open sheet stacks a new card on top of it
+  return <Button title="What is this?" onPress={() => present({ render: ... })} />;
+}
+```
+
+Tune the recede of covered cards with `stackScale` / `stackPeek` on the
+provider.
+
+## Status bar
+
+While any sheet is open the backdrop behind the receded screen is dark, so the
+provider mounts a `light-content` status bar entry by default and restores
+your app's style when the last sheet closes. Change the style — or opt out —
+with `statusBarStyle`:
+
+```tsx
+<SheetStageProvider statusBarStyle="dark-content">   {/* or null to disable */}
+```
+
 ## Motion
 
 The open/settle animation is fully configurable, and it's just Reanimated's
@@ -133,6 +163,9 @@ Wraps the app and renders the receding stage + the active sheet.
 | `stageScale` | `number` | `0.91` | Scale the parent shrinks to when a sheet is open. |
 | `stageRadius` | `number` | `14` | Corner radius of the receded parent card. |
 | `stageDim` | `number` | `0.35` | Max opacity of the dim layer over the parent. |
+| `stackScale` | `number` | `0.96` | Scale a covered sheet shrinks to when another sheet stacks on top. |
+| `stackPeek` | `number` | `10` | How many points of a covered sheet peek above the sheet covering it. |
+| `statusBarStyle` | `StatusBarStyle \| null` | `"light-content"` | Status bar style pushed while any sheet is open; `null` disables. |
 | `backdropColor` | `string` | `"#000000"` | Colour revealed behind the receded card. |
 | `stageColor` | `string` | `"#FFFFFF"` | Background of the stage itself. |
 | `sheetColor` | `string` | `"#FFFFFF"` | Sheet card background. |

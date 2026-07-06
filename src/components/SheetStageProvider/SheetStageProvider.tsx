@@ -1,14 +1,22 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { useWindowDimensions, View } from "react-native";
+import { StatusBar, useWindowDimensions, View } from "react-native";
 import Animated, {
   Extrapolation,
   interpolate,
   useAnimatedStyle,
   useSharedValue,
+  type SharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { COLORS, STAGE_DIM, STAGE_RADIUS, STAGE_SCALE } from "../../constants";
+import {
+  COLORS,
+  STACK_PEEK,
+  STACK_SCALE,
+  STAGE_DIM,
+  STAGE_RADIUS,
+  STAGE_SCALE,
+} from "../../constants";
 import { SheetStageContext } from "../../contexts/SheetStageContext";
 import type {
   DraggableSheetHandle,
@@ -19,11 +27,16 @@ import type {
 import { DraggableSheet } from "../DraggableSheet";
 import { styles } from "./styles";
 
+const MAX_STACK = 4;
+
 export function SheetStageProvider({
   children,
   stageScale = STAGE_SCALE,
   stageRadius = STAGE_RADIUS,
   stageDim = STAGE_DIM,
+  stackScale = STACK_SCALE,
+  stackPeek = STACK_PEEK,
+  statusBarStyle = "light-content",
   backdropColor = COLORS.backdrop,
   stageColor = COLORS.stage,
   sheetColor = COLORS.sheet,
@@ -34,51 +47,72 @@ export function SheetStageProvider({
 }: SheetStageProviderProps) {
   const insets = useSafeAreaInsets();
   const { height: screenHeight } = useWindowDimensions();
-  const progress = useSharedValue(0);
-  const [descriptor, setDescriptor] = useState<SheetDescriptor | null>(null);
-  const [open, setOpen] = useState(false);
-  const sheetRef = useRef<DraggableSheetHandle>(null);
+
+  const p0 = useSharedValue(0);
+  const p1 = useSharedValue(0);
+  const p2 = useSharedValue(0);
+  const p3 = useSharedValue(0);
+  const p4 = useSharedValue(0);
+  const progresses = useMemo(() => [p0, p1, p2, p3, p4], [p0, p1, p2, p3, p4]);
+
+  const [stack, setStack] = useState<SheetDescriptor[]>([]);
+  const [openFlags, setOpenFlags] = useState<boolean[]>([]);
+  const stackLength = useRef(0);
+  stackLength.current = stack.length;
+  const sheetRefs = useRef<(DraggableSheetHandle | null)[]>([]);
 
   const present = useCallback((next: SheetDescriptor) => {
-    setDescriptor(next);
-    setOpen(true);
+    setStack((s) => (s.length >= MAX_STACK ? s : [...s, next]));
+    setOpenFlags((f) => (f.length >= MAX_STACK ? f : [...f, true]));
   }, []);
 
-  const close = useCallback(() => setOpen(false), []);
+  const closeAt = useCallback((index: number) => {
+    if (index !== stackLength.current - 1) return;
+    setOpenFlags((f) =>
+      index < f.length ? [...f.slice(0, index), false] : f,
+    );
+  }, []);
+
+  const close = useCallback(() => {
+    closeAt(stackLength.current - 1);
+  }, [closeAt]);
 
   const snapToIndex = useCallback((index: number) => {
-    sheetRef.current?.snapToIndex(index);
+    sheetRefs.current[stackLength.current - 1]?.snapToIndex(index);
   }, []);
 
-  const handleClosed = useCallback(() => {
-    progress.value = 0;
-    setOpen(false);
-    setDescriptor((current) => {
-      current?.onClose?.();
-      return null;
-    });
-  }, [progress]);
+  const handleClosedAt = useCallback(
+    (index: number) => {
+      progresses[index].value = 0;
+      setStack((s) => {
+        s[index]?.onClose?.();
+        return s.slice(0, index);
+      });
+      setOpenFlags((f) => f.slice(0, index));
+    },
+    [progresses],
+  );
 
   const value = useMemo<SheetStageContextValue>(
-    () => ({ progress, present, close, snapToIndex }),
-    [progress, present, close, snapToIndex],
+    () => ({ progress: progresses[0], present, close, snapToIndex }),
+    [progresses, present, close, snapToIndex],
   );
 
   const stageStyle = useAnimatedStyle(() => {
     const scale = interpolate(
-      progress.value,
+      progresses[0].value,
       [0, 1],
       [1, stageScale],
       Extrapolation.CLAMP,
     );
     const radius = interpolate(
-      progress.value,
+      progresses[0].value,
       [0, 1],
       [0, stageRadius],
       Extrapolation.CLAMP,
     );
     const ty = interpolate(
-      progress.value,
+      progresses[0].value,
       [0, 1],
       [0, insets.top - (screenHeight * (1 - stageScale)) / 2],
       Extrapolation.CLAMP,
@@ -88,7 +122,7 @@ export function SheetStageProvider({
 
   const dimStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
-      progress.value,
+      progresses[0].value,
       [0, 1],
       [0, stageDim],
       Extrapolation.CLAMP,
@@ -98,6 +132,9 @@ export function SheetStageProvider({
   return (
     <SheetStageContext.Provider value={value}>
       <View style={[styles.root, { backgroundColor: backdropColor }]}>
+        {stack.length > 0 && statusBarStyle ? (
+          <StatusBar animated barStyle={statusBarStyle} />
+        ) : null}
         <Animated.View
           style={[styles.stage, { backgroundColor: stageColor }, stageStyle]}
         >
@@ -107,24 +144,81 @@ export function SheetStageProvider({
             style={[styles.dim, { backgroundColor: dimColor }, dimStyle]}
           />
         </Animated.View>
-        {descriptor ? (
-          <DraggableSheet
-            ref={sheetRef}
-            stageProgress={progress}
-            open={open}
-            onClose={handleClosed}
-            snapPoints={descriptor.snapPoints}
-            initialSnapIndex={descriptor.initialSnapIndex}
-            springConfig={descriptor.springConfig ?? springConfig}
-            velocityFactor={descriptor.velocityFactor ?? velocityFactor}
-            sheetColor={sheetColor}
-            handleColor={handleColor}
-            dimColor={dimColor}
+        {stack.map((descriptor, i) => (
+          <StackLayer
+            key={i}
+            coveredBy={progresses[i + 1]}
+            covered={i < stack.length - 1}
+            topFraction={descriptor.snapPoints[0]}
+            stackScale={stackScale}
+            stackPeek={stackPeek}
+            screenHeight={screenHeight}
           >
-            {descriptor.render({ close })}
-          </DraggableSheet>
-        ) : null}
+            <DraggableSheet
+              ref={(handle) => {
+                sheetRefs.current[i] = handle;
+              }}
+              stageProgress={progresses[i]}
+              open={openFlags[i]}
+              onClose={() => handleClosedAt(i)}
+              snapPoints={descriptor.snapPoints}
+              initialSnapIndex={descriptor.initialSnapIndex}
+              springConfig={descriptor.springConfig ?? springConfig}
+              velocityFactor={descriptor.velocityFactor ?? velocityFactor}
+              sheetColor={sheetColor}
+              handleColor={handleColor}
+              dimColor={dimColor}
+            >
+              {descriptor.render({ close: () => closeAt(i) })}
+            </DraggableSheet>
+          </StackLayer>
+        ))}
       </View>
     </SheetStageContext.Provider>
+  );
+}
+
+function StackLayer({
+  coveredBy,
+  covered,
+  topFraction,
+  stackScale,
+  stackPeek,
+  screenHeight,
+  children,
+}: {
+  coveredBy: SharedValue<number>;
+  covered: boolean;
+  topFraction: number;
+  stackScale: number;
+  stackPeek: number;
+  screenHeight: number;
+  children: React.ReactNode;
+}) {
+  const recedeStyle = useAnimatedStyle(() => {
+    const sheetTop = topFraction * screenHeight;
+    const scaleDrop = (screenHeight / 2 - sheetTop) * (1 - stackScale);
+    const scale = interpolate(
+      coveredBy.value,
+      [0, 1],
+      [1, stackScale],
+      Extrapolation.CLAMP,
+    );
+    const ty = interpolate(
+      coveredBy.value,
+      [0, 1],
+      [0, -(scaleDrop + stackPeek)],
+      Extrapolation.CLAMP,
+    );
+    return { transform: [{ translateY: ty }, { scale }] };
+  });
+
+  return (
+    <Animated.View
+      pointerEvents={covered ? "none" : "box-none"}
+      style={[styles.layer, recedeStyle]}
+    >
+      {children}
+    </Animated.View>
   );
 }

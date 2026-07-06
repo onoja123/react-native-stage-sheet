@@ -14,6 +14,17 @@ export const STAGE_SCALE = 0.91;
 export const STAGE_RADIUS = 14;
 export const STAGE_DIM = 0.35;
 
+export const STACK_SCALE = 0.96;
+export const STACK_PEEK = 10;
+
+export const ABSOLUTE_FILL = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+} as const;
+
 export const SHEET_RADIUS = 20;
 export const HANDLE_WIDTH = 40;
 export const HANDLE_HEIGHT = 4;

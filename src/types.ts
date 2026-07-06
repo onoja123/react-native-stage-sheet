@@ -1,5 +1,10 @@
 import type { ReactNode } from "react";
-import type { StyleProp, TextStyle, ViewStyle } from "react-native";
+import type {
+  StatusBarStyle,
+  StyleProp,
+  TextStyle,
+  ViewStyle,
+} from "react-native";
 import type { SharedValue, WithSpringConfig } from "react-native-reanimated";
 
 export interface SheetDescriptor {
@@ -48,8 +53,11 @@ export interface StageConfig {
   stageScale?: number;
   stageRadius?: number;
   stageDim?: number;
+  stackScale?: number;
+  stackPeek?: number;
   backdropColor?: string;
   stageColor?: string;
+  statusBarStyle?: StatusBarStyle | null;
 }
 
 export interface SheetStageProviderProps extends StageConfig, SheetColors {

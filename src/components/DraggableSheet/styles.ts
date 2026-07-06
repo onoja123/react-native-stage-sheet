@@ -1,6 +1,11 @@
 import { StyleSheet } from "react-native";
 
-import { HANDLE_HEIGHT, HANDLE_WIDTH, SHEET_RADIUS } from "../../constants";
+import {
+  ABSOLUTE_FILL,
+  HANDLE_HEIGHT,
+  HANDLE_WIDTH,
+  SHEET_RADIUS,
+} from "../../constants";
 
 export const styles = StyleSheet.create({
   root: {
@@ -11,7 +16,7 @@ export const styles = StyleSheet.create({
     overflow: "hidden",
   },
   dim: {
-    ...StyleSheet.absoluteFillObject,
+    ...ABSOLUTE_FILL,
   },
   sheet: {
     position: "absolute",
