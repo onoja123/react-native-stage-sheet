@@ -1,10 +1,12 @@
 import type { WithSpringConfig } from "react-native-reanimated";
 
+// Critically damped (damping ≈ 2·√(stiffness·mass)) so the sheet settles
+// without overshooting its snap point; the clamp covers fast flings too.
 export const DEFAULT_SPRING: WithSpringConfig = {
-  damping: 22,
+  damping: 30,
   stiffness: 240,
   mass: 0.9,
-  overshootClamping: false,
+  overshootClamping: true,
 };
 
 export const DEFAULT_TOP_GAP = 12;

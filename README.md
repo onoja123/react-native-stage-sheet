@@ -150,7 +150,9 @@ present({
 });
 ```
 
-If neither is set, a sensible default spring is used.
+If neither is set, a critically damped spring is used, so sheets settle on their
+snap point without bouncing past it. Pass a lower `dampingRatio` (or `damping`)
+if you want a springier feel.
 
 ## API
 
@@ -171,7 +173,7 @@ Wraps the app and renders the receding stage + the active sheet.
 | `sheetColor` | `string` | `"#FFFFFF"` | Sheet card background. |
 | `handleColor` | `string` | `"#D1D5DB"` | Drag-handle pill colour. |
 | `dimColor` | `string` | `"#000000"` | Dim overlay colour. |
-| `springConfig` | `WithSpringConfig` | sensible spring | Default open/settle animation for every sheet. |
+| `springConfig` | `WithSpringConfig` | critically damped, no overshoot | Default open/settle animation for every sheet. |
 | `velocityFactor` | `number` | `0.15` | Default fling-to-snap bias for every sheet. |
 
 ### `useStageSheet()`
